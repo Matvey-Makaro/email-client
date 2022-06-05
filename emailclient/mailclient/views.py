@@ -8,9 +8,47 @@ from django.urls import reverse
 from mailclient.forms import SendEmailFrom
 from mailclient.models import User
 
+###################################################################
+#DEBUG
+# from mailclient.test_email_tools.mail_fetcher import *
+# from mailclient.test_email_tools.mail_parser import *
+#
+# def test_mail_fetch():
+#     mail_fetcher = MailFetcher("pop.gmail.com", "matvey.makaro@gmail.com", 'lgfjsjbceckawxgg')
+#     all_messages, allsizes, limit = mail_fetcher.downloadAllMessages()
+#
+#     # print(all_messages[0])
+#     # print(type(all_messages))
+#     print(type(all_messages[0]))
+#
+#     mail_parser = MailParser()
+#     mail = mail_parser.parseMessage(all_messages[0])
+#
+#     print("Main Text:")
+#     main_text = mail_parser.findMainText(mail)
+#     print(main_text)
+#     print("main_test[0]", main_text[0])
+#     print(type(main_text))
+#     print(type(main_text[0]))
+#     print(f"Header: {mail.get}")
+#
+#     print(
+#        "##############################################################################################################")
+
+    # mail_fetcher.disconnect(server)
+
+##############################################################################
+from .mail_fetcher import MailFetcher
+
+
+def test_imap_mail():
+    mail_fetch = MailFetcher("matvey.makaro@gmail.com", 'lgfjsjbceckawxgg', "pop.gmail.com", 993)
+    mail_fetch.get_messages(3)
+##############################################################################
 
 def index(request):
     # Authenticated users view their inbox
+    test_imap_mail()
     if request.user.is_authenticated:
         if request.method == 'POST':
             form = SendEmailFrom(request.POST)
