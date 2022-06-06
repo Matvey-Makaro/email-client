@@ -8,6 +8,9 @@ from django.urls import reverse
 from mailclient.forms import *
 from mailclient.models import *
 
+from .mail_fetcher import MailFetcher
+from .mail_parser import MailParser
+
 ###################################################################
 # DEBUG
 # from mailclient.test_email_tools.mail_fetcher import *
@@ -38,7 +41,6 @@ from mailclient.models import *
 # mail_fetcher.disconnect(server)
 
 ##############################################################################
-from .mail_fetcher import MailFetcher
 
 
 def test_imap_mail():
@@ -176,15 +178,28 @@ def mail(request, mail_id):
 
 def mailbox(request, mailbox_id):
     if request.user.is_authenticated:
+        mailbox = Mailbox.objects.get(id=mailbox_id)
+        address = mailbox.address
+        password = mailbox.password
+        imap4_server_name = "imap.gmail.com"
+        server_port = 993
+        # TODO: Изменить БД, сделать миграцию и раскомментировать строки ниже
+        # imap4_server_name = mailbox.imap4_server_name
+        # server_port = int(mailbox.server_port)
+        mail_fetcher = MailFetcher(address, password, imap4_server_name, server_port)
+        messages = mail_fetcher.get_messages(3)
+        mail_parser = MailParser()
+        mail_parser.save_messages(messages, request.user)
+
         context = {"title": "Mailbox",
                    "mailboxes": Mailbox.objects.filter(user=request.user),
-                   "emails": Email.objects.filter(recipient__pk=mailbox_id),
+                   "emails": Email.objects.filter(recipients=Mailbox.objects.get(id=mailbox_id).address),
                    # TODO: Сделать чтобы показывались только сообщения пользователя, а не вообще все сообщения в БД
                    # "emails": Email.objects.filter(user=request.user),
                    "menu": menu}
         return render(request, 'mailclient/index.html', context)
     else:
-        return render(request, 'mailclient/register.html')
+        return HttpResponseRedirect(reverse('login'))
 
 
 def archive(request, year):  # Удалить потом, это просто для теста
@@ -245,11 +260,12 @@ def send_email(request):
                 message = form.cleaned_data["message"]
                 password = Mailbox.objects.get(address=from_email).password
                 send_mail(subject, message, from_email, [to_email], auth_user=from_email, auth_password=password)
-
+                form = SendEmailForm()
         else:
             form = SendEmailForm()
         context["form"] = form
         # TODO: Добавить проверку, ввёл ли пользователь свою почту
+        # TODO: Добавить проверку исключений
         return render(request, "mailclient/sendemail.html", context)
     else:
         return HttpResponseRedirect(reverse('login'))
