@@ -50,6 +50,7 @@ def test_imap_mail():
 
 menu = [{'title': 'Send', 'url_name': 'send_mail'},
         {'title': 'Add mailbox', 'url_name': 'add_mailbox'},
+        {'title': 'Log out', 'url_name': 'logout'},
         {'title': "About", 'url_name': 'about'}
         ]
 
@@ -59,8 +60,9 @@ def index(request):
     if request.user.is_authenticated:
         context = {"title": "Mail",
                    "mailboxes": Mailbox.objects.filter(user=request.user),
+                   "emails": Email.objects.all(),
                    # TODO: Сделать чтобы показывались только сообщения пользователя, а не вообще все сообщения в БД
-                   "emails": Email.objects.filter(user=request.user),
+                   # "emails": Email.objects.filter(user=request.user),
                    "menu": menu}
         return render(request, 'mailclient/index.html', context)
 
@@ -108,11 +110,7 @@ def index(request):
 
 
 def login_view(request):
-    context = {"title": "Mail",
-               "mailboxes": Mailbox.objects.filter(user=request.user),
-               "menu": menu}
     if request.method == 'POST':
-
         # Attempt to sign user in
         username = request.POST['username']
         password = request.POST['password']
@@ -121,13 +119,13 @@ def login_view(request):
         # Check if authentication successful
         if user is not None:
             login(request, user)
-            return HttpResponseRedirect(reverse('index'), context)
+            return HttpResponseRedirect(reverse('index'))
         else:
             return render(request, 'mailclient/login.html', {
                 'message': 'Invalid username and/or password.'
             })
     else:
-        return render(request, 'mailclient/login.html', context)
+        return render(request, 'mailclient/login.html')
 
 
 def logout_view(request):
@@ -162,8 +160,31 @@ def register(request):
         return render(request, 'mailclient/register.html')
 
 
-def mail(request, mailid):
-    return HttpResponse(f"<h1>Письмо номер</h1><p>{mailid}</p>")
+def mail(request, mail_id):
+    if request.user.is_authenticated:
+        try:
+            if request.user == Email.objects.get(id=mail_id).user:
+                return HttpResponse(f"<h1>Письмо номер</h1><p>{mail_id}</p>")
+            else:
+                return HttpResponseRedirect(reverse('index'))
+            # TODO: Наверное, надо добавить обработку исключения, если пользователь в url ввёл id почты не своей
+        except Exception:
+            raise Http404
+    else:
+        return HttpResponseRedirect(reverse('login'))
+
+
+def mailbox(request, mailbox_id):
+    if request.user.is_authenticated:
+        context = {"title": "Mailbox",
+                   "mailboxes": Mailbox.objects.filter(user=request.user),
+                   "emails": Email.objects.filter(recipient__pk=mailbox_id),
+                   # TODO: Сделать чтобы показывались только сообщения пользователя, а не вообще все сообщения в БД
+                   # "emails": Email.objects.filter(user=request.user),
+                   "menu": menu}
+        return render(request, 'mailclient/index.html', context)
+    else:
+        return render(request, 'mailclient/register.html')
 
 
 def archive(request, year):  # Удалить потом, это просто для теста
@@ -177,22 +198,33 @@ def logout_view(request):
 
 
 def add_mailbox(request):
+    context = {"title": "Mail",
+               "menu": menu,
+               "mailboxes": Mailbox.objects.filter(user=request.user),
+               }
     if request.user.is_authenticated:
         if request.method == 'POST':
             form = GetMailBox(request.POST)
             if form.is_valid():
                 address = form.cleaned_data["address"]
                 password = form.cleaned_data["password"]
-                Mailbox.objects.create(address=address, password=password, user=request.user)
+                is_exist = False
+                try:
+                    for u in User.objects.filter(mailbox__address=address):
+                        if u == request.user:
+                            context['message'] = "This mailbox already exists"
+                            context['form'] = form
+                            is_exist = True
+                except User.DoesNotExist:
+                    print("User.DoesNotExist in add_mailbox")
+                if not is_exist:
+                    Mailbox.objects.create(address=address, password=password, user=request.user)
+                    form = GetMailBox()
+                    context["form"] = form
         else:
             form = GetMailBox()
-        context = {"title": "Mail",
-                    "menu": menu,
-                    "mailboxes": Mailbox.objects.filter(user=request.user),
-                    'form': form
-                    }
+            context["form"] = form
         return render(request, 'mailclient/addmailbox.html', context)
-
     # Everyone else is prompted to sign in
     else:
         return HttpResponseRedirect(reverse('login'))
@@ -204,6 +236,7 @@ def send_mail(request):
 
 def about(request):
     return HttpResponse("Страница about")
+
 
 def page_not_found(request, exception):
     return HttpResponseNotFound('<h1>Страница не найдена</h1>')

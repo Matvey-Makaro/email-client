@@ -10,6 +10,7 @@ urlpatterns = [
     path('add_mailbox', add_mailbox, name='add_mailbox'),
     path('send_mail', send_mail, name='send_mail'),
     path('mail/<int:mail_id>/', mail, name='mail'),
+    path('mailbox/<int:mailbox_id>/', mailbox, name='mailbox'),
     path('about', about, name='about'),
     path('archive/<int:year>/', archive),
 ]

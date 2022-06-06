@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from pkg_resources import _
+from django.urls import reverse
 
 
 class User(AbstractUser):
@@ -11,12 +12,16 @@ class User(AbstractUser):
 class Mailbox(models.Model):
     address = models.EmailField()
     password = models.CharField(_('password'), max_length=128)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mailboxes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mailbox')
+
+    def get_absolute_url(self):
+        return reverse('mailbox', kwargs={'mailbox_id': self.pk})
 
 
 class Email(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='emails')
     sender = models.ForeignKey(Mailbox, on_delete=models.CASCADE, related_name='emails_sender')
+    recipient = models.ForeignKey(Mailbox, on_delete=models.CASCADE, related_name='emails_recipient')
     # recipients = models.ManyToManyField(Mailbox, related_name='emails_received')
     recipients = models.EmailField()
     subject = models.CharField(max_length=255)
@@ -24,6 +29,9 @@ class Email(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     read = models.BooleanField(default=False)
     archived = models.BooleanField(default=False)
+
+    def get_absolute_url(self):
+        return reverse('mail', kwargs={'mail_id': self.pk})
 
     def serialize(self):
         return {

@@ -47,7 +47,7 @@
                     <ul id="leftchapters">
                         <li class="selected"> Mailboxes </li>
                         {% for m in mailboxes %}
-                            <li><a href="#">{{m.address}}</a></li>
+                            <li><a href="{{ m.get_absolute_url }}">{{m.address}}</a></li>
                         {% endfor %}
                     </ul>
                 </td>

@@ -10,6 +10,9 @@
         <form action='{% url "add_mailbox" %}' method='post'>
             {% csrf_token %}
             {{form.as_p}}
+            {% if message %}
+                <p class='text-danger text-center'>{{ message }}</p>
+            {% endif %}
             <button type="submit">Add</button>
         </form>
     </div>
