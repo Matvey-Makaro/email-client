@@ -5,11 +5,11 @@ from django.http import HttpResponse, HttpResponseNotFound, Http404, HttpRespons
 from django.shortcuts import render
 from django.urls import reverse
 
-from mailclient.forms import SendEmailFrom
-from mailclient.models import User
+from mailclient.forms import *
+from mailclient.models import *
 
 ###################################################################
-#DEBUG
+# DEBUG
 # from mailclient.test_email_tools.mail_fetcher import *
 # from mailclient.test_email_tools.mail_parser import *
 #
@@ -35,7 +35,7 @@ from mailclient.models import User
 #     print(
 #        "##############################################################################################################")
 
-    # mail_fetcher.disconnect(server)
+# mail_fetcher.disconnect(server)
 
 ##############################################################################
 from .mail_fetcher import MailFetcher
@@ -44,47 +44,73 @@ from .mail_fetcher import MailFetcher
 def test_imap_mail():
     mail_fetch = MailFetcher("matvey.makaro@gmail.com", 'lgfjsjbceckawxgg', "pop.gmail.com", 993)
     mail_fetch.get_messages(3)
+
+
 ##############################################################################
+
+menu = [{'title': 'Send', 'url_name': 'send_mail'},
+        {'title': 'Add mailbox', 'url_name': 'add_mailbox'},
+        {'title': "About", 'url_name': 'about'}
+        ]
+
 
 def index(request):
     # Authenticated users view their inbox
-    test_imap_mail()
     if request.user.is_authenticated:
-        if request.method == 'POST':
-            form = SendEmailFrom(request.POST)
-            if form.is_valid():
-                sender = form.cleaned_data["from_email"]
-                receiver = form.cleaned_data["to_email"]
-                subject = form.cleaned_data["subject"]
-                message = form.cleaned_data["message"]
-
-            # TODO: Получить пароль для почты из бд и послать сообщение
-            # tmp = send_mail(subject, message, sender, receiver, auth_user=sender, auth_password=password)
-            # try:
-            #     password = 'lgfjsjbceckawxgg'
-            #     tmp = send_mail("Test programm", "Test programm", "matvey.makaro@gmail.com", ["makaro.matvey@gmail.com"],
-            #                 auth_user="matvey.makaro@gmail.com", auth_password=password)
-            #     print(f"Num of messages: {tmp}")
-            # except ConnectionRefusedError:
-            #     print(f"Exception ConnectionRefusedError")
-
-            # try:
-            #     send_mail(f'{subject} от {from_email}', message,
-            #               DEFAULT_FROM_EMAIL, RECIPIENTS_EMAIL)
-            # except BadHeaderError:
-            #     return HttpResponse('Ошибка в теме письма.')
-            # return redirect('success')
-
-        else:
-            form = SendEmailFrom()
-        return render(request, 'mailclient/inbox.html', {'form': form})
+        context = {"title": "Mail",
+                   "mailboxes": Mailbox.objects.filter(user=request.user),
+                   # TODO: Сделать чтобы показывались только сообщения пользователя, а не вообще все сообщения в БД
+                   "emails": Email.objects.filter(user=request.user),
+                   "menu": menu}
+        return render(request, 'mailclient/index.html', context)
 
     # Everyone else is prompted to sign in
     else:
         return HttpResponseRedirect(reverse('login'))
 
 
+# def index(request):
+#     # Authenticated users view their inbox
+#     test_imap_mail()
+#     if request.user.is_authenticated:
+#         if request.method == 'POST':
+#             form = SendEmailFrom(request.POST)
+#             if form.is_valid():
+#                 sender = form.cleaned_data["from_email"]
+#                 receiver = form.cleaned_data["to_email"]
+#                 subject = form.cleaned_data["subject"]
+#                 message = form.cleaned_data["message"]
+#
+#             # TODO: Получить пароль для почты из бд и послать сообщение
+#             # tmp = send_mail(subject, message, sender, receiver, auth_user=sender, auth_password=password)
+#             # try:
+#             #     password = 'lgfjsjbceckawxgg'
+#             #     tmp = send_mail("Test programm", "Test programm", "matvey.makaro@gmail.com", ["makaro.matvey@gmail.com"],
+#             #                 auth_user="matvey.makaro@gmail.com", auth_password=password)
+#             #     print(f"Num of messages: {tmp}")
+#             # except ConnectionRefusedError:
+#             #     print(f"Exception ConnectionRefusedError")
+#
+#             # try:
+#             #     send_mail(f'{subject} от {from_email}', message,
+#             #               DEFAULT_FROM_EMAIL, RECIPIENTS_EMAIL)
+#             # except BadHeaderError:
+#             #     return HttpResponse('Ошибка в теме письма.')
+#             # return redirect('success')
+#
+#         else:
+#             form = SendEmailFrom()
+#         return render(request, 'mailclient/inbox.html', {'form': form})
+#
+#     # Everyone else is prompted to sign in
+#     else:
+#         return HttpResponseRedirect(reverse('login'))
+
+
 def login_view(request):
+    context = {"title": "Mail",
+               "mailboxes": Mailbox.objects.filter(user=request.user),
+               "menu": menu}
     if request.method == 'POST':
 
         # Attempt to sign user in
@@ -95,13 +121,13 @@ def login_view(request):
         # Check if authentication successful
         if user is not None:
             login(request, user)
-            return HttpResponseRedirect(reverse('index'))
+            return HttpResponseRedirect(reverse('index'), context)
         else:
             return render(request, 'mailclient/login.html', {
                 'message': 'Invalid username and/or password.'
             })
     else:
-        return render(request, 'mailclient/login.html')
+        return render(request, 'mailclient/login.html', context)
 
 
 def logout_view(request):
@@ -136,13 +162,11 @@ def register(request):
         return render(request, 'mailclient/register.html')
 
 
-def mails(request, mailid):
-    if request.GET:
-        print(request.GET)
+def mail(request, mailid):
     return HttpResponse(f"<h1>Письмо номер</h1><p>{mailid}</p>")
 
 
-def archive(request, year): # Удалить потом, это просто для теста
+def archive(request, year):  # Удалить потом, это просто для теста
     if int(year) > 2022:
         raise Http404()
 
@@ -151,6 +175,35 @@ def logout_view(request):
     logout(request)
     return HttpResponseRedirect(reverse('index'))
 
+
+def add_mailbox(request):
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            form = GetMailBox(request.POST)
+            if form.is_valid():
+                address = form.cleaned_data["address"]
+                password = form.cleaned_data["password"]
+                Mailbox.objects.create(address=address, password=password, user=request.user)
+        else:
+            form = GetMailBox()
+        context = {"title": "Mail",
+                    "menu": menu,
+                    "mailboxes": Mailbox.objects.filter(user=request.user),
+                    'form': form
+                    }
+        return render(request, 'mailclient/addmailbox.html', context)
+
+    # Everyone else is prompted to sign in
+    else:
+        return HttpResponseRedirect(reverse('login'))
+
+
+def send_mail(request):
+    return HttpResponse("Страница отправки сообщений")
+
+
+def about(request):
+    return HttpResponse("Страница about")
 
 def page_not_found(request, exception):
     return HttpResponseNotFound('<h1>Страница не найдена</h1>')
