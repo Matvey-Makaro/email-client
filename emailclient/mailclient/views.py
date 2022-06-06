@@ -230,8 +230,29 @@ def add_mailbox(request):
         return HttpResponseRedirect(reverse('login'))
 
 
-def send_mail(request):
-    return HttpResponse("Страница отправки сообщений")
+def send_email(request):
+    context = {"title": "Mail",
+               "menu": menu,
+               "mailboxes": Mailbox.objects.filter(user=request.user),
+               }
+    if request.user.is_authenticated:
+        if request.method == 'POST':
+            form = SendEmailForm(request.POST)
+            if form.is_valid():
+                from_email = form.cleaned_data["from_email"]
+                to_email = form.cleaned_data["to_email"]
+                subject = form.cleaned_data["subject"]
+                message = form.cleaned_data["message"]
+                password = Mailbox.objects.get(address=from_email).password
+                send_mail(subject, message, from_email, [to_email], auth_user=from_email, auth_password=password)
+
+        else:
+            form = SendEmailForm()
+        context["form"] = form
+        # TODO: Добавить проверку, ввёл ли пользователь свою почту
+        return render(request, "mailclient/sendemail.html", context)
+    else:
+        return HttpResponseRedirect(reverse('login'))
 
 
 def about(request):

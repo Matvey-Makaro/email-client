@@ -1,10 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Title</title>
-</head>
-<body>
+{% extends 'mailclient/base.html' %}
 
-</body>
-</html>
+{% block body %}
+<div id='emails-send'></div>
+
+    <div id='compose-view'>
+        <h3 class='text-center mb-4'>Send Email</h3>
+        <div id='compose-message'></div>
+        <form action='{% url "send_mail" %}' method='post'>
+            {% csrf_token %}
+            {{form.as_p}}
+            {% if message %}
+                <p class='text-danger text-center'>{{ message }}</p>
+            {% endif %}
+            <button type="submit">Add</button>
+        </form>
+    </div>
+{% endblock %}

@@ -3,15 +3,12 @@ from .models import *
 
 
 class SendEmailForm(forms.Form):
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user')
-        if self.user is not None:
-            self.fields['from_email'].queryset= queryset=Email.objects.filter(user__pk=self.user.pk)
-
-    from_email = forms.ModelChoiceField(label="mailboxes", empty_label="select mailbox")
+    # from_email = forms.ModelChoiceField(queryset=Email.objects.filter(user__pk=self.c), label="mailboxes", empty_label="select mailbox")
+    from_email = forms.EmailField()
     to_email = forms.EmailField()
     subject = forms.CharField(max_length=255)
     message = forms.CharField(widget=forms.Textarea(attrs={'cols': 60, 'rows': 10}))
+
 
 
 # class GetMailBox(forms.Form):
