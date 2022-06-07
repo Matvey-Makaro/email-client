@@ -5,11 +5,13 @@ from django.http import HttpResponse, HttpResponseNotFound, Http404, HttpRespons
 from django.shortcuts import render
 from django.urls import reverse
 
+from emailclient import settings
 from mailclient.forms import *
 from mailclient.models import *
 
 from .mail_fetcher import MailFetcher
 from .mail_parser import MailParser
+
 
 ###################################################################
 # DEBUG
@@ -62,8 +64,7 @@ def index(request):
     if request.user.is_authenticated:
         context = {"title": "Mail",
                    "mailboxes": Mailbox.objects.filter(user=request.user),
-                   "emails": Email.objects.all(),
-                   # TODO: Сделать чтобы показывались только сообщения пользователя, а не вообще все сообщения в БД
+                   # TODO: Возможно надо показывать все сообщение пользователя, а возможно и нет
                    # "emails": Email.objects.filter(user=request.user),
                    "menu": menu}
         return render(request, 'mailclient/index.html', context)
@@ -73,6 +74,7 @@ def index(request):
         return HttpResponseRedirect(reverse('login'))
 
 
+# TODO: Удалить перед сдачей
 # def index(request):
 #     # Authenticated users view their inbox
 #     test_imap_mail()
@@ -85,7 +87,6 @@ def index(request):
 #                 subject = form.cleaned_data["subject"]
 #                 message = form.cleaned_data["message"]
 #
-#             # TODO: Получить пароль для почты из бд и послать сообщение
 #             # tmp = send_mail(subject, message, sender, receiver, auth_user=sender, auth_password=password)
 #             # try:
 #             #     password = 'lgfjsjbceckawxgg'
@@ -165,15 +166,15 @@ def register(request):
 def mail(request, mail_id):
     if request.user.is_authenticated:
         try:
-            if request.user == Email.objects.get(id=mail_id).user:
+            curr_mail = Email.objects.get(id=mail_id)
+            if request.user == curr_mail.user:
                 context = {"title": "Mail",
                            "mailboxes": Mailbox.objects.filter(user=request.user),
                            "menu": menu,
-                           "mail": Email.objects.get(pk=mail_id)}
+                           "mail": curr_mail}
                 return render(request, 'mailclient/mail.html', context)
             else:
                 return HttpResponseRedirect(reverse('index'))
-            # TODO: Наверное, надо добавить обработку исключения, если пользователь в url ввёл id почты не своей
         except Exception:
             raise Http404
     else:
@@ -181,32 +182,41 @@ def mail(request, mail_id):
 
 
 def mailbox(request, mailbox_id):
+    context = {"title": "Mailbox",
+               "mailboxes": Mailbox.objects.filter(user=request.user),
+               "menu": menu}
     if request.user.is_authenticated:
-        mailbox = Mailbox.objects.get(id=mailbox_id)
+        try:
+            mailbox = Mailbox.objects.get(id=mailbox_id)
+            if mailbox.user != request.user:
+                raise Http404()
+        except Exception:
+            raise Http404
+
         address = mailbox.address
         password = mailbox.password
-        imap4_server_name = "imap.gmail.com"
-        server_port = 993
-        # TODO: Изменить БД, сделать миграцию и раскомментировать строки ниже
-        # imap4_server_name = mailbox.imap4_server_name
-        # server_port = int(mailbox.server_port)
+        imap4_server_name, server_port = MailParser.get_imap_server_by_address(address)
         mail_fetcher = MailFetcher(address, password, imap4_server_name, server_port)
-        # TODO: Изменить способ количества получения сообщений
-        print(f"DO last_email_id: {Mailbox.objects.get(pk=mailbox_id).last_email_id}")
-        print(f"Type last_email_id: {type(Mailbox.objects.get(pk=mailbox_id).last_email_id)}")
-        messages, last_email_id = mail_fetcher.get_messages(Mailbox.objects.get(pk=mailbox_id).last_email_id)
-        Mailbox.objects.update(last_email_id=last_email_id)
-        print(f"After last_email_id: {Mailbox.objects.get(pk=mailbox_id).last_email_id}")
-        print(f"Type After last_email_id: {type(Mailbox.objects.get(pk=mailbox_id).last_email_id)}")
-        mail_parser = MailParser()
-        mail_parser.save_messages(messages, request.user)
 
-        context = {"title": "Mailbox",
-                   "mailboxes": Mailbox.objects.filter(user=request.user),
-                   "emails": Email.objects.filter(recipients=Mailbox.objects.get(id=mailbox_id).address).order_by("-timestamp"),
-                   # TODO: Сделать чтобы показывались только сообщения пользователя, а не вообще все сообщения в БД
-                   # "emails": Email.objects.filter(user=request.user),
-                   "menu": menu}
+        try:
+            messages, last_email_id = mail_fetcher.get_messages(Mailbox.objects.get(pk=mailbox_id).last_email_id)
+            Mailbox.objects.update(last_email_id=last_email_id)
+        except Exception:
+            context["message"] = "Unable to access the server, please try again later"
+            return render(request, 'mailclient/index.html', context)
+
+        try:
+            MailParser.save_messages(messages, request.user)
+        except Exception:
+            pass
+
+        try:
+            mailbox = Mailbox.objects.get(id=mailbox_id)
+            context["emails"] = Email.objects.filter(user=request.user).filter(recipients=mailbox.address). \
+                order_by("-timestamp")
+        except Exception:
+            pass
+
         return render(request, 'mailclient/index.html', context)
     else:
         return HttpResponseRedirect(reverse('login'))
@@ -244,7 +254,8 @@ def add_mailbox(request):
                     print("User.DoesNotExist in add_mailbox")
                 if not is_exist:
                     # TODO: Заменить на нормальные server и port
-                    mail_fetcher = MailFetcher(address, password, "imap.gmail.com", 993)
+                    server_name, port = MailParser.get_imap_server_by_address(address)
+                    mail_fetcher = MailFetcher(address, password, server_name, port)
                     if mail_fetcher.is_valid_mailbox():
                         Mailbox.objects.create(address=address, password=password, user=request.user)
                         form = GetMailBox()
@@ -266,25 +277,41 @@ def send_email(request):
                "menu": menu,
                "mailboxes": Mailbox.objects.filter(user=request.user),
                }
-    if request.user.is_authenticated:
-        if request.method == 'POST':
-            form = SendEmailForm(request.POST)
-            if form.is_valid():
-                from_email = form.cleaned_data["from_email"]
-                to_email = form.cleaned_data["to_email"]
-                subject = form.cleaned_data["subject"]
-                message = form.cleaned_data["message"]
-                password = Mailbox.objects.get(address=from_email).password
-                send_mail(subject, message, from_email, [to_email], auth_user=from_email, auth_password=password)
+    try:
+        if request.user.is_authenticated:
+            if request.method == 'POST':
+                form = SendEmailForm(request.POST)
+                if form.is_valid():
+                    from_email = form.cleaned_data["from_email"]
+                    to_email = form.cleaned_data["to_email"]
+                    subject = form.cleaned_data["subject"]
+                    message = form.cleaned_data["message"]
+
+                    is_authorized = True
+                    try:
+                        password = Mailbox.objects.filter(address=from_email).get(user=request.user).password
+                    except Exception:
+                        context["message"] = "You are not authorized in this mailbox"
+                        is_authorized = False
+
+                    if is_authorized:
+                        smtp_server_name, port = MailParser.get_smtp_server_by_address(from_email)
+                        settings.EMAIL_HOST = smtp_server_name
+                        settings.EMAIL_PORT = port
+                        send_mail(subject, message, from_email, [to_email], auth_user=from_email,
+                                  auth_password=password)
+                        form = SendEmailForm()
+            else:
                 form = SendEmailForm()
+            context["form"] = form
+            return render(request, "mailclient/sendemail.html", context)
         else:
-            form = SendEmailForm()
+            return HttpResponseRedirect(reverse('login'))
+    except Exception:
+        context["message"] = "Failed to send message"
+        form = SendEmailForm(request.POST)
         context["form"] = form
-        # TODO: Добавить проверку, ввёл ли пользователь свою почту
-        # TODO: Добавить проверку исключений
         return render(request, "mailclient/sendemail.html", context)
-    else:
-        return HttpResponseRedirect(reverse('login'))
 
 
 def about(request):

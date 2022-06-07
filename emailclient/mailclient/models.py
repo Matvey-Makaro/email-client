@@ -14,7 +14,7 @@ class Mailbox(models.Model):
     password = models.CharField(_('password'), max_length=128)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mailbox')
     last_email_id = models.IntegerField(default=0)
-    # TODO: добавить поля, которые ниже
+    # TODO: добавить поля, которые ниже(нет)
     imap4_server_name = models.CharField(max_length=128)
     server_port = models.CharField(max_length=10)
 

@@ -32,10 +32,13 @@ class MailFetcher:
         messages = []
         msg_num = int(msg_num[0])
         for i in range(msg_num, first_id, -1):
-            # fetch the email message by ID
-            res, msg = self._imap4_server.fetch(str(i), "(RFC822)")
-            msg.append(i)  # TODO: Скорее всего надо удалить
-            messages.append(msg)
+            try:
+                # fetch the email message by ID
+                res, msg = self._imap4_server.fetch(str(i), "(RFC822)")
+                messages.append(msg)
+            except Exception:
+                pass
+
         self._disconnect()
         return messages, msg_num
 
