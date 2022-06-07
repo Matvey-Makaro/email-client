@@ -182,6 +182,7 @@ def mail(request, mail_id):
 
 
 def mailbox(request, mailbox_id):
+    # TODO: Добавить отправителя и время отправки сообщения в mail.html
     context = {"title": "Mailbox",
                "mailboxes": Mailbox.objects.filter(user=request.user),
                "menu": menu}
