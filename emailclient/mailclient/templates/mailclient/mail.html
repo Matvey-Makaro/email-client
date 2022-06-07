@@ -1,0 +1,8 @@
+{% extends 'mailclient/base.html' %}
+<h1>{{mail.subject}}</h1>
+
+{% block content %}
+    {% autoescape off %}
+        {{mail.body}}
+    {% endautoescape %}
+{% endblock %}

@@ -20,7 +20,7 @@ class MailFetcher:
         self._imap4_server.close()
         self._imap4_server.logout()
 
-    def get_messages(self, num_messages: int, dir_name: str = "INBOX") -> list:
+    def get_messages(self, first_id: int, dir_name: str = "INBOX") -> (list, int):
         self._connect()
         status, msg_num = self._imap4_server.select(dir_name)
 
@@ -31,14 +31,20 @@ class MailFetcher:
 
         messages = []
         msg_num = int(msg_num[0])
-        for i in range(msg_num, msg_num - num_messages, -1):
+        for i in range(msg_num, first_id, -1):
             # fetch the email message by ID
             res, msg = self._imap4_server.fetch(str(i), "(RFC822)")
-            print(f"Msg type: {type(msg)}")
-            msg.append(i)
+            msg.append(i)  # TODO: Скорее всего надо удалить
             messages.append(msg)
         self._disconnect()
-        return messages
+        return messages, msg_num
 
-
+    def is_valid_mailbox(self) -> bool:
+        try:
+            self._connect()
+            self._imap4_server.select("INBOX")
+            self._disconnect()
+        except imaplib.IMAP4.error:
+            return False
+        return True
 

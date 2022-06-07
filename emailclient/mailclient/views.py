@@ -166,7 +166,11 @@ def mail(request, mail_id):
     if request.user.is_authenticated:
         try:
             if request.user == Email.objects.get(id=mail_id).user:
-                return HttpResponse(f"<h1>Письмо номер</h1><p>{mail_id}</p>")
+                context = {"title": "Mail",
+                           "mailboxes": Mailbox.objects.filter(user=request.user),
+                           "menu": menu,
+                           "mail": Email.objects.get(pk=mail_id)}
+                return render(request, 'mailclient/mail.html', context)
             else:
                 return HttpResponseRedirect(reverse('index'))
             # TODO: Наверное, надо добавить обработку исключения, если пользователь в url ввёл id почты не своей
@@ -187,13 +191,19 @@ def mailbox(request, mailbox_id):
         # imap4_server_name = mailbox.imap4_server_name
         # server_port = int(mailbox.server_port)
         mail_fetcher = MailFetcher(address, password, imap4_server_name, server_port)
-        messages = mail_fetcher.get_messages(3)
+        # TODO: Изменить способ количества получения сообщений
+        print(f"DO last_email_id: {Mailbox.objects.get(pk=mailbox_id).last_email_id}")
+        print(f"Type last_email_id: {type(Mailbox.objects.get(pk=mailbox_id).last_email_id)}")
+        messages, last_email_id = mail_fetcher.get_messages(Mailbox.objects.get(pk=mailbox_id).last_email_id)
+        Mailbox.objects.update(last_email_id=last_email_id)
+        print(f"After last_email_id: {Mailbox.objects.get(pk=mailbox_id).last_email_id}")
+        print(f"Type After last_email_id: {type(Mailbox.objects.get(pk=mailbox_id).last_email_id)}")
         mail_parser = MailParser()
         mail_parser.save_messages(messages, request.user)
 
         context = {"title": "Mailbox",
                    "mailboxes": Mailbox.objects.filter(user=request.user),
-                   "emails": Email.objects.filter(recipients=Mailbox.objects.get(id=mailbox_id).address),
+                   "emails": Email.objects.filter(recipients=Mailbox.objects.get(id=mailbox_id).address).order_by("-timestamp"),
                    # TODO: Сделать чтобы показывались только сообщения пользователя, а не вообще все сообщения в БД
                    # "emails": Email.objects.filter(user=request.user),
                    "menu": menu}
@@ -233,9 +243,15 @@ def add_mailbox(request):
                 except User.DoesNotExist:
                     print("User.DoesNotExist in add_mailbox")
                 if not is_exist:
-                    Mailbox.objects.create(address=address, password=password, user=request.user)
-                    form = GetMailBox()
-                    context["form"] = form
+                    # TODO: Заменить на нормальные server и port
+                    mail_fetcher = MailFetcher(address, password, "imap.gmail.com", 993)
+                    if mail_fetcher.is_valid_mailbox():
+                        Mailbox.objects.create(address=address, password=password, user=request.user)
+                        form = GetMailBox()
+                        context["form"] = form
+                    else:
+                        context['message'] = "No such mailbox"
+                        context['form'] = form
         else:
             form = GetMailBox()
             context["form"] = form

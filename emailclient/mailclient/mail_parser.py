@@ -24,7 +24,7 @@ class MailParser:
 
                     # decode the email subject
                     subject, encoding = decode_header(msg["Subject"])[0]
-                    if isinstance(subject, bytes):
+                    if isinstance(subject, bytes) and encoding is not None:
                         # if it's a bytes, decode to str
                         subject = subject.decode(encoding)
                     else:
@@ -34,7 +34,7 @@ class MailParser:
 
                     # decode From
                     from_email, encoding = decode_header(msg.get("From"))[0]
-                    if isinstance(from_email, bytes):
+                    if isinstance(from_email, bytes) and encoding is not None:
                         from_email = from_email.decode(encoding)
                     else:
                         pass
@@ -42,7 +42,7 @@ class MailParser:
 
                     # decode To
                     to_email, encoding = decode_header(msg.get("To"))[0]
-                    if isinstance(to_email, bytes):
+                    if isinstance(to_email, bytes) and encoding is not None:
                         to_email = to_email.decode(encoding)
                     else:
                         pass
@@ -50,12 +50,18 @@ class MailParser:
 
                     # decode Date
                     date_str, encoding = decode_header(msg.get("Date"))[0]
-                    if isinstance(date_str, bytes):
+                    if isinstance(date_str, bytes) and encoding is not None:
                         date_str = date_str.decode(encoding)
                     else:
                         pass
                         # TODO: Сделать нормальное исключение и отлавливать его
-                    date = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S %z")
+                    date_str = date_str.split()
+                    print(f"Data str: {date_str}")
+                    date_str = date_str[0: 5: 1]
+                    print(f"Data str: {date_str}")
+                    date_str = " ".join(date_str)
+                    print(f"Data str2: {date_str}")
+                    date = datetime.strptime(date_str, "%a, %d %b %Y %H:%M:%S")
                     print(f"Date: {date}")
                     print(f"Date type: {type(date)}")
                     # decode body
@@ -80,7 +86,7 @@ class MailParser:
                         #         webbrowser.open(filepath)
                         #     print("=" * 100)
                     else:
-                        #iterate over email parts
+                        # iterate over email parts
                         for part in msg.walk():
                             # extract content type of email
                             content_type = part.get_content_type()
@@ -96,22 +102,11 @@ class MailParser:
                                 # TODO: Не распечатывать тело, а возвращать его или как-то иначе записывать в БД
                                 # print(body)
                             elif "attachment" in content_disposition:
-                                # download attachment
-                                filename = part.get_filename()
-                                if filename:
-                                    folder_name = self._clean(subject)
-                                    if not os.path.isdir(folder_name):
-                                        # make a folder for this email (named after the subject)
-                                        os.mkdir(folder_name)
-                                    filepath = os.path.join(folder_name, filename)
-                                    # download attachment and save it
-                                    with open(filepath, "wb") as f:
-                                        f.write(part.get_payload(decode=True))
+                                # skip attachment
+                                pass
 
                     Email.objects.create(user=user, from_address=from_email, recipients=to_email, subject=subject,
                                          body=body, timestamp=date)
-
-
 
     # def get_messages(self, num_messages: int, dir_name: str = "INBOX") -> None:
     #     self._connect()
