@@ -14,9 +14,6 @@ class Mailbox(models.Model):
     password = models.CharField(_('password'), max_length=128)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mailbox')
     last_email_id = models.IntegerField(default=0)
-    # TODO: добавить поля, которые ниже(нет)
-    imap4_server_name = models.CharField(max_length=128)
-    server_port = models.CharField(max_length=10)
 
     def get_absolute_url(self):
         return reverse('mailbox', kwargs={'mailbox_id': self.pk})
@@ -37,20 +34,3 @@ class Email(models.Model):
 
     def get_absolute_url(self):
         return reverse('mail', kwargs={'mail_id': self.pk})
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'sender': self.sender.email,
-            'recipients': [user.email for user in self.recipients.all()],
-            'subject': self.subject,
-            'body': self.body,
-            'timestamp': self.timestamp.strftime('%b %d %Y, %I:%M %p'),
-            'read': self.read,
-            'archived': self.archived
-        }
-
-
-
-
-
