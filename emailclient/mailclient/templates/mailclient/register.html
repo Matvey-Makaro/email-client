@@ -1,4 +1,12 @@
-`<div class='d-flex align-items-center justify-content-center vh-100'>
+<!DOCTYPE html>
+<html lang="en">
+        <!-- Custom styles -->
+
+		{% load static %}
+		<link href="{% static 'templates/css/style.css' %}" rel="stylesheet" type="text/css">
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<div class='d-flex align-items-center justify-content-center vh-100'>
     <form action="{% url 'register' %}" method='POST' id='register'>
         {% csrf_token %}
 
@@ -40,3 +48,5 @@
         </div>
     </form>
 </div>
+
+</html>

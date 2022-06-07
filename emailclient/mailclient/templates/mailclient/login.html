@@ -1,3 +1,10 @@
+<!DOCTYPE html>
+
+<html lang="en">
+		{% load static %}
+		<link href="{% static 'templates/css/style.css' %}" rel="stylesheet" type="text/css">
+		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
     <div class='d-flex align-items-center justify-content-center vh-100'>
         <form action="{% url 'login' %}" method='POST' id='login'>
             {% csrf_token %}
@@ -19,7 +26,10 @@
             <div class='form-group mb-4'>
                 <input class='form-control' type='password' name='password' placeholder='Password'>
             </div>
-    
+			<div class='d-grid gap-2'>
+                <input class='btn btn-primary mb-4' type='submit' value='Log in'>
+            </div>
+            <!-- Register buttons -->
             <!-- 2 column grid layout for inline styling -->
             <div class='row mb-4'>
                 <div class='col d-flex justify-content-center'>
@@ -30,34 +40,17 @@
                     </div>
                 </div>
                 
+            <div class='text-center'>
+                <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+            </div>
                 <div class='col'>
                     <!-- Simple link -->
                     <a href='#'>Forgot password?</a>
                 </div>
             </div>
-            <div class='d-grid gap-2'>
-                <input class='btn btn-primary mb-4' type='submit' value='Log in'>
-            </div>
+           
     
-            <!-- Register buttons -->
-            <div class='text-center'>
-                <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
-                <p>or sign up with:</p>
-                <button type='button' class='btn btn-link btn-floating mx-1'>
-                    <i class='fab fa-facebook-f'></i>
-                </button>
-                
-                <button type='button' class='btn btn-link btn-floating mx-1'>
-                    <i class='fab fa-google'></i>
-                </button>
-                
-                <button type='button' class='btn btn-link btn-floating mx-1'>
-                    <i class='fab fa-twitter'></i>
-                </button>
-                
-                <button type='button' class='btn btn-link btn-floating mx-1'>
-                    <i class='fab fa-github'></i>
-                </button>
-            </div>
+
         </form>
     </div>
+</html>

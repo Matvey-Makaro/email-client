@@ -1,0 +1,147 @@
+html {
+	background-color: #2d232e;
+	font-family: Arial;
+	color: #e0ddcf;
+}
+
+.material-icons.md-36 { font-size: 36px; }
+
+a.logo {
+	background-color: none;
+	padding-top: 25px;
+}
+
+ul {
+	padding-left: 1em;
+	line-height: 1.95;
+	display: block;
+    list-style-type: none;
+	color: #e0ddcf;
+}
+
+a {
+	text-decoration: none;
+	color: #6EBAB2;
+	/*color: #8FBCBB;*/
+	padding: 5px;
+	border-radius: 5px;
+	background-color: #403840;
+		
+}
+a:hover {
+	background-color: #474448;
+	color: ;
+}
+a:active {
+	color: #317D95;
+}
+
+td.left-chapters {
+	
+}
+
+#login {
+	display: block;
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	border-radius: 5px;
+}
+
+
+input {
+	border-radius: 5px;
+	padding: 4px;
+}
+
+input.form-control {
+	margin: 8px;
+	background-color: #403840;
+	border-color: #474448;
+	border-style: solid;
+	border-image: none;
+	color: #e0ddcf;
+	cursor: text;
+}
+
+div.form-check {
+	margin: 10px;
+}
+label.form-check-label {
+	margin: 8px;
+	font-size: 16px;
+	color: #aba89b;
+	cursor: pointer;
+}
+input {
+	background-color: #403840;
+	border-color: #474448;
+	border-style: solid;
+	border-image: none;
+	color: #e0ddcf;
+	cursor: pointer;
+}
+input.btn {
+	margin: 8px;
+	background-color: #403840;
+	border-color: #474448;
+	border-style: solid;
+	border-image: none;
+	color: #e0ddcf;
+	cursor: pointer;
+	font-size: 20px;
+}
+input.btn:hover {
+	background-color: #474448;
+}
+input.btn:active {
+	color: #317D95;
+}
+
+textarea {
+	background-color: #403840;
+	border-color: #474448;
+	border-style: solid;
+	border-image: none;
+	color: #e0ddcf;
+}
+
+button {
+	background-color: #403840;
+	border-color: #474448;
+	border-style: solid;
+	border-image: none;
+	border-radius: 5px;
+	color: #e0ddcf;
+	cursor: pointer;
+	font-size: 20px;
+}
+button:hover {
+	background-color: #474448;
+}
+button:active {
+	color: #317D95;
+}
+
+#register {
+	display: block;
+	text-align: center;
+	margin-left: auto;
+	margin-right: auto;
+	border-radius: 5px;
+}
+
+ul.list-articles {
+	background-color: #403840;
+	margin-left: 5em;
+	padding-top: 10px;
+	padding-bottom: 10px;
+	padding-right: 10px;
+	border-radius: 5px;
+}
+
+div#compose-view {
+	display: block;
+	margin-left: 20%;
+	border-radius: 5px;
+}
