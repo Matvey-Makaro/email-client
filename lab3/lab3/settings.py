@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'game_store.apps.GameStoreConfig',
-    #'bootstrap_py',
-    #'pure_pagination'
+    # 'bootstrap_py',
+    # 'pure_pagination'
 ]
 
 MIDDLEWARE = [

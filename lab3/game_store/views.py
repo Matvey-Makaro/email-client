@@ -21,7 +21,7 @@ class OwnThread(threading.Thread):
         self.send_to = send_to
         self.subject = 'Keys for vKiiNGz Game Store'
         self.msg = f'Hello, this is a vKiiNGz Game Store, we bought {gameCount} keys for your game {gameName},' \
-                    f' please send them to us'
+                   f' please send them to us'
 
     def run(self) -> None:
         send_mail(
@@ -30,10 +30,10 @@ class OwnThread(threading.Thread):
             message=self.msg,
             recipient_list=[self.send_to],
             fail_silently=False,
-            )
+        )
 
 
-def sendMessage(gameName, gameCount, authorAddress):
+def send_message(gameName, gameCount, authorAddress):
     message = f'Hello, this is a vKiiNGz Game Store, we bought {gameCount} keys for your game {gameName},' \
               f' please send them to us'
     print(message)
@@ -50,7 +50,7 @@ def sendMessage(gameName, gameCount, authorAddress):
     return 0
 
 
-class homePage(TemplateView):
+class HomePage(TemplateView):
     model = Game
     template_name = 'game_store/home.html'
     context_object_name = 'products'
@@ -92,7 +92,7 @@ class homePage(TemplateView):
 
         request.session['cart'] = cart
         logger.debug("homePage cart contents: " + str(request.session['cart']))
-        #print(request.session['cart'])
+        # print(request.session['cart'])
 
         cat = Game.objects.filter(id=product)
         category_id = cat[0].cat.pk
@@ -108,7 +108,7 @@ class homePage(TemplateView):
         else:
             products = Game.objects.filter(cat=1)
         categories = Category.objects.all()
-        context = super(homePage, self).get_context_data(**kwargs)
+        context = super(HomePage, self).get_context_data(**kwargs)
         context['categories'] = categories
         context['products'] = products
         return context
@@ -137,7 +137,7 @@ def login(request):
         return render(request, 'game_store/login.html', {'error_msg': error_msg})
 
 
-def validateCustomer(customer):
+def validate_customer(customer):
     err_msg = None
     if not customer.first_name:
         err_msg = "First Name Required."
@@ -151,18 +151,18 @@ def validateCustomer(customer):
         err_msg = "Phone is Required."
     elif len(customer.phone) < 10:
         err_msg = "Phone Number must be 10 characters long."
-    elif not(customer.phone.isdecimal()):
+    elif not (customer.phone.isdecimal()):
         err_msg = "Phone Number must contains only numbers."
     elif not customer.email:
         err_msg = "Email is Required."
     elif customer.does_exits():
         err_msg = "User with this email address already registered."
-    elif not(customer.password):
+    elif not (customer.password):
         err_msg = "Password Required."
     return err_msg
 
 
-def registerCustomer(request):
+def register_customer(request):
     first_name = request.POST.get('firstname')
     last_name = request.POST.get('lastname')
     phone = request.POST.get('phone')
@@ -178,7 +178,7 @@ def registerCustomer(request):
     customer = Customer(first_name=first_name, last_name=last_name, phone=phone, email=email, password=password)
 
     err_msg = None
-    err_msg = validateCustomer(customer)
+    err_msg = validate_customer(customer)
 
     if not err_msg:
         customer.password = make_password(customer.password)
@@ -193,7 +193,7 @@ def signup(request):
     if request.method == 'GET':
         return render(request, 'game_store/signup.html')
     else:
-        return registerCustomer(request)
+        return register_customer(request)
 
 
 def logout(request):
@@ -215,7 +215,7 @@ def checkout(request):
         customer_id = request.session.get("customer_id")
         cart = request.session.get("cart")
         products = Game.get_products_by_id(list(cart.keys()))
-        emailList =[]
+        email_list = []
         for product in products:
             order = Order(customer=Customer(id=customer_id), product=product, price=product.price, address=address,
                           phone=phone, quantity=cart.get(str(product.id)))
@@ -224,11 +224,11 @@ def checkout(request):
                 'gameCount': cart.get(str(product.id)),
                 'authorAddress': product.authorEmail
             }
-            emailList.append(helpdict)
+            email_list.append(helpdict)
             if address:
                 order.save()
-        for i in range(len(emailList)):
-            thread = OwnThread(emailList[i]['gameName'], emailList[i]['gameCount'], emailList[i]['authorAddress'])
+        for i in range(len(email_list)):
+            thread = OwnThread(email_list[i]['gameName'], email_list[i]['gameCount'], email_list[i]['authorAddress'])
             thread.start()
 
         request.session['cart'] = {}
