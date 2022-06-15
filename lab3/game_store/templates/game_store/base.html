@@ -1,0 +1,112 @@
+{% load  static %}
+<!doctype html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://pro.fontawesome.com/releases/v5.10.0/css/all.css">
+
+    <title>Ecommerce</title>
+    <style>
+
+
+        a{
+        font-size: 15px;
+        }
+
+        a:hover{
+            transition: transform .6s ease;
+            transform: scale(1.1);
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            border: none;
+            color: white;
+            background: #FF0000 !important;
+                }
+        body{
+            background-color: #000000;
+
+        }
+        .hover_img{
+        transition: transform .5s ease;
+        }
+        .hover_img:hover{
+            transform: scale(1.05);
+        }
+        #popup_modal{
+        max-width: 1000px;
+        margin-top: 0px;
+        }
+
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand text-white" style="pointer-events: none;">
+        <img src="{% static 'game_store/images/mylogo.png' %}" height="30px">
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+                <a class="nav-link" href="{% url 'home' %}">Store</a>
+            </li>
+        </ul>
+
+        <ul class="navbar-nav my-2 my-lg-0">
+            <li class="nav-item">
+                {% if request.session.email %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="#" style="pointer-events: none;">{{request.session.email}}</a>
+            </li>
+             <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'cart' %}">Cart</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'checkout' %}">Order</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'logout' %}">Logout</a>
+            </li>
+
+            {% else %}
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'signup' %}">Signup</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="{% url 'login' %}">Login</a>
+            </li>
+
+            {% endif %}
+        </ul>
+
+    </div>
+</nav>
+
+
+
+{% block content %}
+
+{% endblock %}
+
+<div class="container-fluid bg-dark mt-3">
+    <center><strong><p class="text-white mb-0  ml-4 py-3" style="font-size: 18px;"><i class="fas fa-copyright"></i> 2022 E-Commerce Software by vKiiNGz. All rights reserved.</p></strong></center>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+<script>
+
+</script>
+</body>
+</html>

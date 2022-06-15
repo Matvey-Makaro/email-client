@@ -1,0 +1,28 @@
+        a{
+        font-size: 15px;
+        }
+
+        a:hover{
+            transition: transform .6s ease;
+            transform: scale(1.1);
+            text-decoration: none;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+            border: none;
+            color: white;
+            background: #FF0000 !important;
+                }
+        body{
+            background-color: #000000;
+
+        }
+        .hover_img{
+        transition: transform .5s ease;
+        }
+        .hover_img:hover{
+            transform: scale(1.05);
+        }
+        #popup_modal{
+        max-width: 1000px;
+        margin-top: 0px;
+        }

@@ -152,3 +152,4 @@ fabric.properties
 
 #sqlite3
 *.sqlite3
+lab3/media/
