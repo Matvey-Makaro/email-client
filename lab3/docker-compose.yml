@@ -1,0 +1,26 @@
+version: "3.3"
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=django_db
+      - POSTGRES_USER=game_store
+      - POSTGRES_PASSWORD=123
+      - POSTGRES_HOST=127.0.0.1
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_NAME=py_labs
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=5225
+      - POSTGRES_HOST=db
+    depends_on:
+      - 127.0.0.1
